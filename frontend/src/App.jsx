@@ -53,6 +53,8 @@ function App() {
           }
         >
           <Route index element={<ManagerDashboard />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="records" element={<RecordsPage />} />
           <Route path="tasks" element={<TasksPage />} />
         </Route>
 

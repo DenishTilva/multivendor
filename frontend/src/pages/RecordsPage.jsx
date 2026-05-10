@@ -1,13 +1,30 @@
 import { useEffect, useMemo, useState } from "react";
 
 import DashboardLayout from "../components/DashboardLayout";
-import { createRecord, deleteRecord, getRecords, updateRecord } from "../api/recordApi";
+import {
+  createRecord,
+  deleteRecord,
+  getRecords,
+  updateRecord,
+} from "../api/recordApi";
 
 const FIELDS = [
   { key: "category", label: "Category", placeholder: "e.g. Electronics" },
-  { key: "subCategory", label: "Sub-category", placeholder: "e.g. Mobile phones" },
-  { key: "shortDescription", label: "Short description", placeholder: "A concise summary…" },
-  { key: "fullDescription", label: "Full description", placeholder: "Detailed description…" },
+  {
+    key: "subCategory",
+    label: "Sub-category",
+    placeholder: "e.g. Mobile phones",
+  },
+  {
+    key: "shortDescription",
+    label: "Short description",
+    placeholder: "A concise summary…",
+  },
+  {
+    key: "fullDescription",
+    label: "Full description",
+    placeholder: "Detailed description…",
+  },
 ];
 
 const cx = (...classes) => classes.filter(Boolean).join(" ");
@@ -44,7 +61,9 @@ export default function RecordsPage() {
     // If permissions object is missing, default to showing everything for admins/managers;
     // otherwise show only keys with truthy permissions.
     const keys = FIELDS.map((f) => f.key);
-    const hasAnyPermissionFlag = keys.some((k) => typeof permissions?.[k] === "boolean");
+    const hasAnyPermissionFlag = keys.some(
+      (k) => typeof permissions?.[k] === "boolean",
+    );
 
     if (!hasAnyPermissionFlag) return keys;
 
@@ -77,7 +96,9 @@ export default function RecordsPage() {
 
   const stats = useMemo(() => {
     const total = records.length;
-    const mine = records.filter((r) => r?.createdBy?._id && r.createdBy._id === user?._id).length;
+    const mine = records.filter(
+      (r) => r?.createdBy?._id && r.createdBy._id === user?._id,
+    ).length;
     return { total, mine };
   }, [records, user?._id]);
 
@@ -88,7 +109,9 @@ export default function RecordsPage() {
       const res = await getRecords();
       setRecords(res?.data?.records || []);
     } catch (e) {
-      setError(e?.response?.data?.message || e?.message || "Failed to load records");
+      setError(
+        e?.response?.data?.message || e?.message || "Failed to load records",
+      );
     } finally {
       setLoading(false);
     }
@@ -121,12 +144,17 @@ export default function RecordsPage() {
       setForm(toInitialForm(visibleFieldKeys));
 
       if (created?._id) {
-        setRecords((prev) => [created, ...prev.filter((r) => r?._id !== created._id)]);
+        setRecords((prev) => [
+          created,
+          ...prev.filter((r) => r?._id !== created._id),
+        ]);
       } else {
         await fetchAll();
       }
     } catch (e2) {
-      setFormError(e2?.response?.data?.message || e2?.message || "Failed to create record");
+      setFormError(
+        e2?.response?.data?.message || e2?.message || "Failed to create record",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -159,14 +187,18 @@ export default function RecordsPage() {
       const updated = res?.data?.record;
 
       if (updated?._id) {
-        setRecords((prev) => prev.map((r) => (r?._id === updated._id ? updated : r)));
+        setRecords((prev) =>
+          prev.map((r) => (r?._id === updated._id ? updated : r)),
+        );
       } else {
         await fetchAll();
       }
 
       cancelEdit();
     } catch (e) {
-      alert(e?.response?.data?.message || e?.message || "Failed to update record");
+      alert(
+        e?.response?.data?.message || e?.message || "Failed to update record",
+      );
     } finally {
       setSavingEdit(false);
     }
@@ -184,7 +216,9 @@ export default function RecordsPage() {
       await deleteRecord(id);
       setRecords((prev) => prev.filter((r) => r?._id !== id));
     } catch (e) {
-      alert(e?.response?.data?.message || e?.message || "Failed to delete record");
+      alert(
+        e?.response?.data?.message || e?.message || "Failed to delete record",
+      );
     } finally {
       setDeletingIds((prev) => {
         const next = new Set(prev);
@@ -194,11 +228,16 @@ export default function RecordsPage() {
     }
   };
 
+  const basePath = useMemo(() => {
+    const role = user?.role;
+    return role === "manager" ? "/manager" : "/admin";
+  }, [user?.role]);
+
   return (
     <DashboardLayout
       title="Records"
       subtitle="Create, edit, and manage records"
-      basePath="/admin"
+      basePath={basePath}
     >
       <div className="grid gap-6 lg:grid-cols-12">
         <section className="lg:col-span-5">
@@ -222,7 +261,9 @@ export default function RecordsPage() {
               {visibleFields.length ? (
                 visibleFields.map((f) => (
                   <label key={f.key} className="block">
-                    <div className="text-xs font-medium text-slate-600">{f.label}</div>
+                    <div className="text-xs font-medium text-slate-600">
+                      {f.label}
+                    </div>
                     {f.key === "fullDescription" ? (
                       <textarea
                         value={form[f.key] || ""}
@@ -272,13 +313,17 @@ export default function RecordsPage() {
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
-              <div className="text-xs font-medium text-slate-500">Total records</div>
+              <div className="text-xs font-medium text-slate-500">
+                Total records
+              </div>
               <div className="mt-1 text-lg font-semibold text-slate-900">
                 {stats.total}
               </div>
             </div>
             <div className="rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm">
-              <div className="text-xs font-medium text-slate-500">Created by me</div>
+              <div className="text-xs font-medium text-slate-500">
+                Created by me
+              </div>
               <div className="mt-1 text-lg font-semibold text-slate-900">
                 {stats.mine}
               </div>
@@ -290,7 +335,9 @@ export default function RecordsPage() {
           <div className="rounded-2xl border border-slate-200/70 bg-white shadow-sm">
             <div className="flex items-center justify-between gap-3 border-b border-slate-200/70 px-5 py-4">
               <div>
-                <div className="text-sm font-semibold text-slate-900">Records</div>
+                <div className="text-sm font-semibold text-slate-900">
+                  Records
+                </div>
                 <div className="mt-1 text-sm text-slate-500">
                   Edit and delete records with modern table controls
                 </div>
@@ -321,7 +368,9 @@ export default function RecordsPage() {
                 <thead className="bg-slate-50/70 text-xs uppercase tracking-wide text-slate-500">
                   <tr>
                     <th className="whitespace-nowrap px-5 py-3">Category</th>
-                    <th className="whitespace-nowrap px-5 py-3">Sub-category</th>
+                    <th className="whitespace-nowrap px-5 py-3">
+                      Sub-category
+                    </th>
                     <th className="min-w-[260px] px-5 py-3">Descriptions</th>
                     <th className="whitespace-nowrap px-5 py-3">Created</th>
                     <th className="whitespace-nowrap px-5 py-3">Actions</th>
@@ -354,13 +403,20 @@ export default function RecordsPage() {
                       const isEditing = editingId === r?._id;
                       const deleting = deletingIds.has(r?._id);
                       return (
-                        <tr key={r?._id} className="align-top hover:bg-slate-50/60">
+                        <tr
+                          key={r?._id}
+                          className="align-top hover:bg-slate-50/60"
+                        >
                           <td className="px-5 py-4">
-                            {isEditing && visibleFieldKeys.includes("category") ? (
+                            {isEditing &&
+                            visibleFieldKeys.includes("category") ? (
                               <input
                                 value={editDraft.category || ""}
                                 onChange={(e) =>
-                                  setEditDraft((p) => ({ ...p, category: e.target.value }))
+                                  setEditDraft((p) => ({
+                                    ...p,
+                                    category: e.target.value,
+                                  }))
                                 }
                                 className="w-44 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none ring-sky-500/20 focus:ring-4"
                               />
@@ -372,7 +428,8 @@ export default function RecordsPage() {
                           </td>
 
                           <td className="px-5 py-4">
-                            {isEditing && visibleFieldKeys.includes("subCategory") ? (
+                            {isEditing &&
+                            visibleFieldKeys.includes("subCategory") ? (
                               <input
                                 value={editDraft.subCategory || ""}
                                 onChange={(e) =>
@@ -393,7 +450,9 @@ export default function RecordsPage() {
                           <td className="px-5 py-4">
                             {isEditing ? (
                               <div className="space-y-2">
-                                {visibleFieldKeys.includes("shortDescription") ? (
+                                {visibleFieldKeys.includes(
+                                  "shortDescription",
+                                ) ? (
                                   <textarea
                                     value={editDraft.shortDescription || ""}
                                     onChange={(e) =>
@@ -408,7 +467,9 @@ export default function RecordsPage() {
                                   />
                                 ) : null}
 
-                                {visibleFieldKeys.includes("fullDescription") ? (
+                                {visibleFieldKeys.includes(
+                                  "fullDescription",
+                                ) ? (
                                   <textarea
                                     value={editDraft.fullDescription || ""}
                                     onChange={(e) =>
@@ -512,4 +573,3 @@ export default function RecordsPage() {
     </DashboardLayout>
   );
 }
-

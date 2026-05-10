@@ -32,7 +32,22 @@ function formatPermissions(permissions) {
   return labels.length ? labels.join(", ") : "—";
 }
 
+function safeParseUser() {
+  try {
+    const raw = localStorage.getItem("user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function AdminUsersPage() {
+  const user = useMemo(() => safeParseUser(), []);
+  const basePath = useMemo(() => {
+    const role = user?.role;
+    return role === "manager" ? "/manager" : "/admin";
+  }, [user?.role]);
+
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [usersError, setUsersError] = useState("");
@@ -62,7 +77,9 @@ export default function AdminUsersPage() {
       const res = await getUsers();
       setUsers(res?.data?.users || []);
     } catch (e) {
-      setUsersError(e?.response?.data?.message || e?.message || "Failed to load users");
+      setUsersError(
+        e?.response?.data?.message || e?.message || "Failed to load users",
+      );
     } finally {
       setLoadingUsers(false);
     }
@@ -123,7 +140,10 @@ export default function AdminUsersPage() {
       });
 
       if (created?._id) {
-        setUsers((prev) => [created, ...prev.filter((u) => u?._id !== created._id)]);
+        setUsers((prev) => [
+          created,
+          ...prev.filter((u) => u?._id !== created._id),
+        ]);
       } else {
         await fetchUsers();
       }
@@ -140,7 +160,9 @@ export default function AdminUsersPage() {
     const id = user?._id;
     if (!id) return;
 
-    const ok = window.confirm(`Delete user "${user?.email || user?.name || "this user"}"?`);
+    const ok = window.confirm(
+      `Delete user "${user?.email || user?.name || "this user"}"?`,
+    );
     if (!ok) return;
 
     setDeletingIds((prev) => new Set(prev).add(id));
@@ -148,7 +170,9 @@ export default function AdminUsersPage() {
       await deleteUser(id);
       setUsers((prev) => prev.filter((u) => u?._id !== id));
     } catch (e) {
-      alert(e?.response?.data?.message || e?.message || "Failed to delete user");
+      alert(
+        e?.response?.data?.message || e?.message || "Failed to delete user",
+      );
     } finally {
       setDeletingIds((prev) => {
         const next = new Set(prev);
@@ -162,7 +186,7 @@ export default function AdminUsersPage() {
     <DashboardLayout
       title="Users"
       subtitle="Create, manage roles and permissions"
-      basePath="/admin"
+      basePath={basePath}
     >
       <div className="grid gap-6 lg:grid-cols-12">
         <section className="lg:col-span-5">
@@ -223,7 +247,9 @@ export default function AdminUsersPage() {
               </label>
 
               <label className="block">
-                <div className="text-xs font-medium text-slate-600">Password</div>
+                <div className="text-xs font-medium text-slate-600">
+                  Password
+                </div>
                 <input
                   type="password"
                   value={form.password}
@@ -436,4 +462,3 @@ export default function AdminUsersPage() {
     </DashboardLayout>
   );
 }
-

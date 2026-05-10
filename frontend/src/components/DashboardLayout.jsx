@@ -159,8 +159,38 @@ const DEFAULT_ITEMS = [
   { key: "users", label: "Users", icon: Icon.Users, path: "users" },
   { key: "records", label: "Records", icon: Icon.Records, path: "records" },
   { key: "tasks", label: "Tasks", icon: Icon.Tasks, path: "tasks" },
-  { key: "settings", label: "Settings", icon: Icon.Settings, path: "settings" },
+  // { key: "settings", label: "Settings", icon: Icon.Settings, path: "settings" },
 ];
+
+function safeParseUser() {
+  try {
+    const raw = localStorage.getItem("user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+const ROLE_BASED_MENU = {
+  admin: [
+    { key: "dashboard", label: "Dashboard", icon: Icon.Dashboard, path: "" },
+    { key: "users", label: "Users", icon: Icon.Users, path: "users" },
+    { key: "records", label: "Records", icon: Icon.Records, path: "records" },
+    { key: "tasks", label: "Tasks", icon: Icon.Tasks, path: "tasks" },
+  ],
+  manager: [
+    { key: "dashboard", label: "Dashboard", icon: Icon.Dashboard, path: "" },
+    { key: "records", label: "Records", icon: Icon.Records, path: "records" },
+    { key: "tasks", label: "Tasks", icon: Icon.Tasks, path: "tasks" },
+  ],
+  staff: [
+    { key: "dashboard", label: "Dashboard", icon: Icon.Dashboard, path: "" },
+    { key: "tasks", label: "Tasks", icon: Icon.Tasks, path: "tasks" },
+  ],
+  user: [
+    { key: "dashboard", label: "Dashboard", icon: Icon.Dashboard, path: "" },
+  ],
+};
 
 export default function DashboardLayout({
   title = "Dashboard",
@@ -171,9 +201,12 @@ export default function DashboardLayout({
 }) {
   const navigate = useNavigate();
   const auth = useAuth?.();
+  const loggedInUser = useMemo(() => safeParseUser(), []);
 
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "light",
+  );
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -219,12 +252,17 @@ export default function DashboardLayout({
 
   const navItems = useMemo(() => {
     const prefix = (basePath || "").replace(/\/$/, "");
-    return items.map((i) => {
+
+    // Determine which items to use based on user role
+    const userRole = loggedInUser?.role || "user";
+    const menuItems = ROLE_BASED_MENU[userRole] || ROLE_BASED_MENU.user;
+
+    return menuItems.map((i) => {
       const path = i.path ?? "";
       const to = `${prefix}${path ? `/${path}` : ""}` || "/";
       return { ...i, to };
     });
-  }, [items, basePath]);
+  }, [basePath, loggedInUser?.role]);
 
   const onLogout = () => {
     try {
@@ -280,7 +318,12 @@ export default function DashboardLayout({
         </div>
 
         <div className="px-3">
-          <div className={cx("rounded-xl", theme === "dark" ? "bg-white/4" : "bg-slate-100/70")}>
+          <div
+            className={cx(
+              "rounded-xl",
+              theme === "dark" ? "bg-white/4" : "bg-slate-100/70",
+            )}
+          >
             <div className="px-3 py-3">
               <div className="text-xs font-medium uppercase tracking-wide">
                 Workspace
@@ -315,7 +358,9 @@ export default function DashboardLayout({
                         theme === "dark"
                           ? "bg-white/4 group-hover:bg-white/6"
                           : "bg-white/70 group-hover:bg-white",
-                        theme === "dark" ? "ring-1 ring-white/8" : "ring-1 ring-slate-200/70",
+                        theme === "dark"
+                          ? "ring-1 ring-white/8"
+                          : "ring-1 ring-slate-200/70",
                       )}
                     >
                       <ItemIcon className="h-5 w-5" />
@@ -329,12 +374,20 @@ export default function DashboardLayout({
         </nav>
 
         <div className="px-3 pb-4">
-          <div className={cx("rounded-xl p-3", theme === "dark" ? "bg-white/4" : "bg-slate-100/70")}>
+          <div
+            className={cx(
+              "rounded-xl p-3",
+              theme === "dark" ? "bg-white/4" : "bg-slate-100/70",
+            )}
+          >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="truncate text-xs font-medium">Signed in</div>
                 <div className={cx("truncate text-xs", palette.muted)}>
-                  {auth?.user?.email || auth?.user?.name || auth?.user?.role || "User"}
+                  {auth?.user?.email ||
+                    auth?.user?.name ||
+                    auth?.user?.role ||
+                    "User"}
                 </div>
               </div>
               <button
@@ -402,7 +455,9 @@ export default function DashboardLayout({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+                  onClick={() =>
+                    setTheme((t) => (t === "dark" ? "light" : "dark"))
+                  }
                   className={cx(
                     "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium",
                     palette.button,
@@ -426,19 +481,37 @@ export default function DashboardLayout({
           <main className="px-4 py-6 md:px-6">
             <div className="mx-auto w-full max-w-6xl">
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div className={cx("rounded-2xl p-4", palette.cardBg, palette.cardBorder)}>
+                <div
+                  className={cx(
+                    "rounded-2xl p-4",
+                    palette.cardBg,
+                    palette.cardBorder,
+                  )}
+                >
                   <div className="text-sm font-semibold">Quick Overview</div>
                   <div className={cx("mt-1 text-sm", palette.muted)}>
                     Card-based, clean SaaS layout
                   </div>
                 </div>
-                <div className={cx("rounded-2xl p-4", palette.cardBg, palette.cardBorder)}>
+                <div
+                  className={cx(
+                    "rounded-2xl p-4",
+                    palette.cardBg,
+                    palette.cardBorder,
+                  )}
+                >
                   <div className="text-sm font-semibold">Status</div>
                   <div className={cx("mt-1 text-sm", palette.muted)}>
                     Dark / light professional colors
                   </div>
                 </div>
-                <div className={cx("rounded-2xl p-4", palette.cardBg, palette.cardBorder)}>
+                <div
+                  className={cx(
+                    "rounded-2xl p-4",
+                    palette.cardBg,
+                    palette.cardBorder,
+                  )}
+                >
                   <div className="text-sm font-semibold">Actions</div>
                   <div className={cx("mt-1 text-sm", palette.muted)}>
                     Add your widgets inside the content area
@@ -453,7 +526,11 @@ export default function DashboardLayout({
       </div>
 
       {mobileOpen ? (
-        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true">
+        <div
+          className="fixed inset-0 z-40 md:hidden"
+          role="dialog"
+          aria-modal="true"
+        >
           <div
             className={cx(
               "absolute inset-0",
@@ -469,4 +546,3 @@ export default function DashboardLayout({
     </div>
   );
 }
-
